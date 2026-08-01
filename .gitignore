@@ -30,3 +30,6 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# local KYC playground (use examples/basic for the committed demo)
+/example/
