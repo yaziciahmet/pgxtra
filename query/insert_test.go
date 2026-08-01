@@ -89,3 +89,50 @@ func TestInsertSetClearsFromSelect(t *testing.T) {
 		t.Fatalf("args = %v", args)
 	}
 }
+
+func TestInsertSetAny(t *testing.T) {
+	sql, args := query.Insert(querytest.TUsers).
+		SetAny("legacy_col", 99).
+		Set(querytest.TUsersName, "alice").
+		Build()
+
+	want := "INSERT INTO users (legacy_col, name) VALUES ($1, $2)"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if args[0] != 99 || args[1] != "alice" {
+		t.Fatalf("args = %v", args)
+	}
+}
+
+func TestInsertOnConflictDoNothing(t *testing.T) {
+	sql, args := query.Insert(querytest.TUsers).
+		Set(querytest.TUsersEmail, "a@b.com").
+		OnConflict(querytest.TUsersEmail).
+		DoNothing().
+		Build()
+
+	want := "INSERT INTO users (email) VALUES ($1) ON CONFLICT (email) DO NOTHING"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(args) != 1 || args[0] != "a@b.com" {
+		t.Fatalf("args = %v", args)
+	}
+}
+
+func TestInsertPrefixSuffix(t *testing.T) {
+	sql, args := query.Insert(querytest.TUsers).
+		Prefix("/* batch */ ").
+		Set(querytest.TUsersName, "alice").
+		Suffix(" ON CONFLICT DO NOTHING").
+		Build()
+
+	want := "/* batch */ INSERT INTO users (name) VALUES ($1) ON CONFLICT DO NOTHING"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(args) != 1 {
+		t.Fatalf("args = %v", args)
+	}
+}

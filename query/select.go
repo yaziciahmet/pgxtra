@@ -2,42 +2,6 @@ package query
 
 import "strconv"
 
-type columnFrag struct {
-	col Column
-}
-
-func (c columnFrag) compile(comp *Compiler) {
-	comp.Write(c.col.Qualifier())
-}
-
-type tableFrag struct {
-	table Table
-}
-
-func (t tableFrag) compile(c *Compiler) {
-	c.Write(t.table.SQLName())
-	if alias := t.table.Alias(); alias != "" && alias != t.table.SQLName() {
-		c.Write(" AS ")
-		c.Write(alias)
-	}
-}
-
-// SelectBuilder builds SELECT statements.
-type SelectBuilder struct {
-	with    *WithBuilder
-	prefix  []fragment
-	suffix  []fragment
-	cols    []fragment
-	from    Table
-	joins   []joinClause
-	wheres  []Expr
-	groupBy []fragment
-	having  []Expr
-	orderBy []orderClause
-	limit   *int
-	offset  *int
-}
-
 type joinClause struct {
 	kind  string
 	table Table
@@ -47,6 +11,23 @@ type joinClause struct {
 type orderClause struct {
 	expr string
 	desc bool
+}
+
+// SelectBuilder builds SELECT statements.
+type SelectBuilder struct {
+	with     *WithBuilder
+	prefix   []fragment
+	suffix   []fragment
+	distinct bool
+	cols     []fragment
+	from     Table
+	joins    []joinClause
+	wheres   []Expr
+	groupBy  []fragment
+	having   []Expr
+	orderBy  []orderClause
+	limit    *int
+	offset   *int
 }
 
 // Select starts a SELECT for the given columns.
@@ -67,6 +48,12 @@ func (s *SelectBuilder) Prefix(sql string, args ...any) *SelectBuilder {
 // Suffix injects SQL after the statement.
 func (s *SelectBuilder) Suffix(sql string, args ...any) *SelectBuilder {
 	s.suffix = append(s.suffix, Raw{sql: sql, args: args})
+	return s
+}
+
+// Distinct adds SELECT DISTINCT.
+func (s *SelectBuilder) Distinct() *SelectBuilder {
+	s.distinct = true
 	return s
 }
 
@@ -138,19 +125,15 @@ func (s *SelectBuilder) Offset(n int) *SelectBuilder {
 
 // Build renders SQL and arguments.
 func (s *SelectBuilder) Build() (string, []any) {
-	c := NewCompiler()
-	s.compile(c)
-	return c.SQL(), c.Args()
+	return build(NewCompiler(), s)
 }
 
 func (s *SelectBuilder) compile(c *Compiler) {
-	if s.with != nil {
-		s.with.compilePrefix(c)
-	}
-	for _, p := range s.prefix {
-		p.compile(c)
-	}
+	compilePrefix(c, s.with, s.prefix)
 	c.Write("SELECT ")
+	if s.distinct {
+		c.Write("DISTINCT ")
+	}
 	for i, col := range s.cols {
 		if i > 0 {
 			c.Write(", ")
@@ -169,15 +152,7 @@ func (s *SelectBuilder) compile(c *Compiler) {
 		c.Write(" ON ")
 		j.on.compile(c)
 	}
-	if len(s.wheres) > 0 {
-		c.Write(" WHERE ")
-		for i, w := range s.wheres {
-			if i > 0 {
-				c.Write(" AND ")
-			}
-			w.compile(c)
-		}
-	}
+	compileWhere(c, s.wheres)
 	if len(s.groupBy) > 0 {
 		c.Write(" GROUP BY ")
 		for i, col := range s.groupBy {
@@ -216,7 +191,5 @@ func (s *SelectBuilder) compile(c *Compiler) {
 		c.Write(" OFFSET ")
 		c.Write(strconv.Itoa(*s.offset))
 	}
-	for _, p := range s.suffix {
-		p.compile(c)
-	}
+	compileSuffix(c, s.suffix)
 }

@@ -1,10 +1,5 @@
 package query
 
-type colVal struct {
-	name string
-	val  any
-}
-
 // InsertBuilder builds INSERT statements.
 type InsertBuilder struct {
 	with     *WithBuilder
@@ -37,27 +32,14 @@ func (b *InsertBuilder) Suffix(sql string, args ...any) *InsertBuilder {
 // Set adds or overwrites a column value.
 func (b *InsertBuilder) Set(col Column, val any) *InsertBuilder {
 	b.fromSel = nil
-	name := col.SQLName()
-	for i, s := range b.sets {
-		if s.name == name {
-			b.sets[i].val = val
-			return b
-		}
-	}
-	b.sets = append(b.sets, colVal{name: name, val: val})
+	b.sets = upsertColVal(b.sets, col.SQLName(), colVal{name: col.SQLName(), val: val})
 	return b
 }
 
 // SetAny sets a column by name.
 func (b *InsertBuilder) SetAny(column string, val any) *InsertBuilder {
 	b.fromSel = nil
-	for i, s := range b.sets {
-		if s.name == column {
-			b.sets[i].val = val
-			return b
-		}
-	}
-	b.sets = append(b.sets, colVal{name: column, val: val})
+	b.sets = upsertColVal(b.sets, column, colVal{name: column, val: val})
 	return b
 }
 
@@ -112,17 +94,7 @@ func (oc *OnConflictBuilder) DoNothing() *InsertBuilder {
 func (oc *OnConflictBuilder) DoUpdate(assigns ...assignment) *InsertBuilder {
 	for _, a := range assigns {
 		name := a.col.SQLName()
-		found := false
-		for i, u := range oc.clause.updates {
-			if u.name == name {
-				oc.clause.updates[i].val = a.val
-				found = true
-				break
-			}
-		}
-		if !found {
-			oc.clause.updates = append(oc.clause.updates, colVal{name: name, val: a.val})
-		}
+		oc.clause.updates = upsertColVal(oc.clause.updates, name, colVal{name: name, val: a.val})
 	}
 	oc.insert.conflict = &oc.clause
 	return oc.insert
@@ -135,18 +107,11 @@ func Assign(col Column, val any) assignment {
 
 // Build renders SQL and arguments.
 func (b *InsertBuilder) Build() (string, []any) {
-	c := NewCompiler()
-	b.compile(c)
-	return c.SQL(), c.Args()
+	return build(NewCompiler(), b)
 }
 
 func (b *InsertBuilder) compile(c *Compiler) {
-	if b.with != nil {
-		b.with.compilePrefix(c)
-	}
-	for _, p := range b.prefix {
-		p.compile(c)
-	}
+	compilePrefix(c, b.with, b.prefix)
 	c.Write("INSERT INTO ")
 	tableFrag{table: b.table}.compile(c)
 	if b.fromSel != nil {
@@ -188,20 +153,10 @@ func (b *InsertBuilder) compile(c *Compiler) {
 				}
 				c.Write(u.name)
 				c.Write(" = ")
-				c.Write(c.Arg(u.val))
+				u.compileRHS(c)
 			}
 		}
 	}
-	if len(b.returns) > 0 {
-		c.Write(" RETURNING ")
-		for i, col := range b.returns {
-			if i > 0 {
-				c.Write(", ")
-			}
-			col.compile(c)
-		}
-	}
-	for _, p := range b.suffix {
-		p.compile(c)
-	}
+	compileReturning(c, b.returns)
+	compileSuffix(c, b.suffix)
 }

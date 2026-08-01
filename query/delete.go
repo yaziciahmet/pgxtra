@@ -43,39 +43,14 @@ func (b *DeleteBuilder) Returning(cols ...Column) *DeleteBuilder {
 
 // Build renders SQL and arguments.
 func (b *DeleteBuilder) Build() (string, []any) {
-	c := NewCompiler()
-	b.compile(c)
-	return c.SQL(), c.Args()
+	return build(NewCompiler(), b)
 }
 
 func (b *DeleteBuilder) compile(c *Compiler) {
-	if b.with != nil {
-		b.with.compilePrefix(c)
-	}
-	for _, p := range b.prefix {
-		p.compile(c)
-	}
+	compilePrefix(c, b.with, b.prefix)
 	c.Write("DELETE FROM ")
 	tableFrag{table: b.table}.compile(c)
-	if len(b.wheres) > 0 {
-		c.Write(" WHERE ")
-		for i, w := range b.wheres {
-			if i > 0 {
-				c.Write(" AND ")
-			}
-			w.compile(c)
-		}
-	}
-	if len(b.returns) > 0 {
-		c.Write(" RETURNING ")
-		for i, col := range b.returns {
-			if i > 0 {
-				c.Write(", ")
-			}
-			col.compile(c)
-		}
-	}
-	for _, p := range b.suffix {
-		p.compile(c)
-	}
+	compileWhere(c, b.wheres)
+	compileReturning(c, b.returns)
+	compileSuffix(c, b.suffix)
 }
