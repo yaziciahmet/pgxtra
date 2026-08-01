@@ -141,3 +141,55 @@ func TestSelectRightCrossJoin(t *testing.T) {
 		t.Fatalf("args = %v", args)
 	}
 }
+
+func TestSelectRawCoalesce(t *testing.T) {
+	sql, args := query.Select(
+		querytest.TUsersID,
+		query.NewRawCol("COALESCE(NULLIF(?, ''), ?) AS display_name", querytest.TUsersName, query.Col("users", "nickname")),
+	).
+		From(querytest.TUsers).
+		Build()
+
+	want := "SELECT users.id, COALESCE(NULLIF(users.name, ''), users.nickname) AS display_name FROM users"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(args) != 0 {
+		t.Fatalf("args = %v", args)
+	}
+}
+
+func TestSelectRawBoundValue(t *testing.T) {
+	sql, args := query.Select(
+		querytest.TUsersID,
+		query.NewRawCol("COALESCE(?, ?) AS display_name", "untitled", querytest.TUsersName),
+	).
+		From(querytest.TUsers).
+		Build()
+
+	want := "SELECT users.id, COALESCE($1, users.name) AS display_name FROM users"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(args) != 1 || args[0] != "untitled" {
+		t.Fatalf("args = %v", args)
+	}
+}
+
+func TestSelectRawInterleaved(t *testing.T) {
+	sql, args := query.Select(
+		querytest.TUsersID,
+		query.NewRawCol("lower(?) AS email_lower", querytest.TUsersEmail),
+		querytest.TUsersName,
+	).
+		From(querytest.TUsers).
+		Build()
+
+	want := "SELECT users.id, lower(users.email) AS email_lower, users.name FROM users"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(args) != 0 {
+		t.Fatalf("args = %v", args)
+	}
+}

@@ -18,6 +18,8 @@ func With(name string) *query.WithBuilder { return query.With(name) }
 
 func Col(table, column string) query.Column { return query.Col(table, column) }
 
+func NewRawCol(sql string, args ...any) query.Column { return query.NewRawCol(sql, args...) }
+
 func Named(name string) query.Table { return query.Named(name) }
 
 func Assign(col query.Column, val any) query.Assignment { return query.Assign(col, val) }
