@@ -111,8 +111,8 @@ func codegenConfig(opts Options) (codegen.Config, error) {
 	}
 
 	cfg := codegen.Config{
-		Package:       pkg,
-		ImportPath:    importPath,
+		Package:     pkg,
+		ImportPath:  importPath,
 		TypgVersion: version,
 	}
 	if opts.QuerySource != "" {

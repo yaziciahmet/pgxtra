@@ -5,13 +5,13 @@ import "github.com/yaziciahmet/typg/internal/query"
 type Posts struct{}
 
 func (Posts) SQLName() string { return "posts" }
-func (Posts) Alias() string  { return "posts" }
+func (Posts) Alias() string   { return "posts" }
 
 type PostUserID struct{ posts Posts }
 
-func (PostUserID) SQLName() string     { return "user_id" }
-func (PostUserID) Qualifier() string   { return "posts.user_id" }
-func (PostUserID) Table() query.Table  { return Posts{} }
+func (PostUserID) SQLName() string    { return "user_id" }
+func (PostUserID) Qualifier() string  { return "posts.user_id" }
+func (PostUserID) Table() query.Table { return Posts{} }
 func (PostUserID) Eq(v int64) query.Expr {
 	return query.RawExpr("posts.user_id = ?", v)
 }
@@ -35,8 +35,8 @@ func (PostPublished) Eq(v bool) query.Expr {
 }
 
 var (
-	TPosts        = Posts{}
-	TPostUserID   = PostUserID{}
-	TPostTitle    = PostTitle{}
+	TPosts         = Posts{}
+	TPostUserID    = PostUserID{}
+	TPostTitle     = PostTitle{}
 	TPostPublished = PostPublished{}
 )

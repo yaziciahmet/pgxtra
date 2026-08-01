@@ -9,13 +9,13 @@ import (
 type Users struct{}
 
 func (Users) SQLName() string { return "users" }
-func (Users) Alias() string  { return "users" }
+func (Users) Alias() string   { return "users" }
 
 type UserID struct{ users Users }
 
-func (UserID) SQLName() string     { return "id" }
-func (UserID) Qualifier() string   { return "users.id" }
-func (UserID) Table() query.Table  { return Users{} }
+func (UserID) SQLName() string    { return "id" }
+func (UserID) Qualifier() string  { return "users.id" }
+func (UserID) Table() query.Table { return Users{} }
 func (UserID) Eq(v int64) query.Expr {
 	return query.RawExpr("users.id = ?", v)
 }

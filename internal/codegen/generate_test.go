@@ -8,9 +8,9 @@ import (
 	"testing"
 
 	"github.com/yaziciahmet/typg/internal/codegen"
+	"github.com/yaziciahmet/typg/internal/query"
 	"github.com/yaziciahmet/typg/internal/schema"
 	"github.com/yaziciahmet/typg/internal/testschema"
-	"github.com/yaziciahmet/typg/internal/query"
 )
 
 func TestGenerateCompile(t *testing.T) {
@@ -22,7 +22,7 @@ func TestGenerateCompile(t *testing.T) {
 	}
 	writeFile(t, filepath.Join(modRoot, "go.mod"), `module example.com/app
 
-go 1.26.5
+go 1.24.0
 
 require (
 	github.com/google/uuid v1.6.0
@@ -31,10 +31,10 @@ require (
 `)
 
 	cfg := codegen.Config{
-		Package:       "db",
-		ImportPath:    "example.com/app/gen/db",
+		Package:     "db",
+		ImportPath:  "example.com/app/gen/db",
 		TypgVersion: "test",
-		QueryFS:       query.EmbeddedFS,
+		QueryFS:     query.EmbeddedFS,
 	}
 
 	db := testschema.Database()
@@ -86,8 +86,8 @@ func TestSmoke(t *testing.T) {
 
 func TestGenerateUsersFileContents(t *testing.T) {
 	cfg := codegen.Config{
-		Package:       "db",
-		ImportPath:    "example.com/app/gen/db",
+		Package:     "db",
+		ImportPath:  "example.com/app/gen/db",
 		TypgVersion: "test",
 	}
 	db := testschema.Database()
@@ -167,8 +167,8 @@ func TestGenerateUsersFileContents(t *testing.T) {
 
 func TestGenerateEnumsFile(t *testing.T) {
 	cfg := codegen.Config{
-		Package:       "db",
-		ImportPath:    "example.com/app/gen/db",
+		Package:     "db",
+		ImportPath:  "example.com/app/gen/db",
 		TypgVersion: "test",
 	}
 	files, err := codegen.Generate(cfg, testschema.Database())
@@ -199,8 +199,8 @@ func TestGenerateEnumsFile(t *testing.T) {
 
 func TestGenerateNoTimeImport(t *testing.T) {
 	cfg := codegen.Config{
-		Package:       "db",
-		ImportPath:    "example.com/app/gen/db",
+		Package:     "db",
+		ImportPath:  "example.com/app/gen/db",
 		TypgVersion: "test",
 	}
 	db := schema.Database{
@@ -230,10 +230,10 @@ func TestGenerateNoTimeImport(t *testing.T) {
 
 func TestEmbeddedQueryOmitsEmbedGo(t *testing.T) {
 	cfg := codegen.Config{
-		Package:       "db",
-		ImportPath:    "example.com/app/gen/db",
+		Package:     "db",
+		ImportPath:  "example.com/app/gen/db",
 		TypgVersion: "test",
-		QueryFS:       query.EmbeddedFS,
+		QueryFS:     query.EmbeddedFS,
 	}
 	files, err := codegen.Generate(cfg, schema.Database{})
 	if err != nil {
