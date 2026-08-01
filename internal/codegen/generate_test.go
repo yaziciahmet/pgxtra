@@ -132,10 +132,15 @@ func TestGenerateUsersFileContents(t *testing.T) {
 		"func (c usersTagsCol) In(",
 		"func (c usersTagsCol) Gt(",
 		"func (c usersMetaCol) Gt(",
+		"func (c usersIDCol) IsNull(",
+		"func (c usersEmailCol) NotNull(",
 	} {
 		if strings.Contains(tableBody, bad) {
 			t.Fatalf("users.go should not contain %q", bad)
 		}
+	}
+	if !strings.Contains(tableBody, "func (c usersLastLoginAtCol) IsNull()") {
+		t.Fatalf("users.go should emit IsNull on nullable columns")
 	}
 	if strings.Contains(tableBody, "type Users struct") {
 		t.Fatalf("users.go should not contain model struct\n%s", tableBody)

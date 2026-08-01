@@ -136,8 +136,11 @@ func emitColumnMethods(b *strings.Builder, imps *imports, cType string, col sche
 		fmt.Fprintf(b, "func (c %s) Contains(v %s) query.Expr { return query.Contains(c, v) }\n", cType, elemType)
 	}
 
-	fmt.Fprintf(b, "func (c %s) IsNull() query.Expr { return query.IsNull(c) }\n", cType)
-	fmt.Fprintf(b, "func (c %s) NotNull() query.Expr { return query.NotNull(c) }\n\n", cType)
+	if col.Nullable {
+		fmt.Fprintf(b, "func (c %s) IsNull() query.Expr { return query.IsNull(c) }\n", cType)
+		fmt.Fprintf(b, "func (c %s) NotNull() query.Expr { return query.NotNull(c) }\n", cType)
+	}
+	b.WriteString("\n")
 }
 
 func valueMethodType(imps *imports, gt schema.GoType) string {
