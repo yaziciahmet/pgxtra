@@ -69,9 +69,9 @@ type OnConflictBuilder struct {
 	clause onConflictClause
 }
 
-type assignment struct {
-	col Column
-	val any
+type Assignment struct {
+	Col Column
+	Val any
 }
 
 // OnConflict starts an ON CONFLICT clause for the given columns.
@@ -91,18 +91,18 @@ func (oc *OnConflictBuilder) DoNothing() *InsertBuilder {
 }
 
 // DoUpdate sets ON CONFLICT DO UPDATE assignments.
-func (oc *OnConflictBuilder) DoUpdate(assigns ...assignment) *InsertBuilder {
+func (oc *OnConflictBuilder) DoUpdate(assigns ...Assignment) *InsertBuilder {
 	for _, a := range assigns {
-		name := a.col.SQLName()
-		oc.clause.updates = upsertColVal(oc.clause.updates, name, colVal{name: name, val: a.val})
+		name := a.Col.SQLName()
+		oc.clause.updates = upsertColVal(oc.clause.updates, name, colVal{name: name, val: a.Val})
 	}
 	oc.insert.conflict = &oc.clause
 	return oc.insert
 }
 
 // Assign pairs a column with a value for ON CONFLICT DO UPDATE.
-func Assign(col Column, val any) assignment {
-	return assignment{col: col, val: val}
+func Assign(col Column, val any) Assignment {
+	return Assignment{Col: col, Val: val}
 }
 
 // Build renders SQL and arguments.
