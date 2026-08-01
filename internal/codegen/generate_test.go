@@ -95,16 +95,22 @@ func TestGenerateUsersFileContents(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	var users []byte
+	var users, modelUsers []byte
 	for _, f := range files {
-		if f.Path == "users.go" {
+		switch {
+		case f.Path == "users.go" && f.Dir == "":
 			users = f.Content
+		case f.Path == "users.go" && f.Dir == "models":
+			modelUsers = f.Content
 		}
 	}
 	if users == nil {
 		t.Fatal("users.go not generated")
 	}
-	body := string(users)
+	if modelUsers == nil {
+		t.Fatal("models/users.go not generated")
+	}
+	tableBody := string(users)
 	for _, want := range []string{
 		"var Users = usersTable",
 		"usersIDCol",
@@ -112,8 +118,20 @@ func TestGenerateUsersFileContents(t *testing.T) {
 		"func (c usersIDCol) In(vals ...int64)",
 		"func (c usersExternalIDCol) In(vals ...uuid.UUID)",
 		"func (c usersBalanceCol) In(vals ...decimal.Decimal)",
-		"func (c usersStatusCol) In(vals ...UserStatus)",
+		"func (c usersStatusCol) In(vals ...models.UserStatus)",
 		"func (t usersTable) Insert()",
+	} {
+		if !strings.Contains(tableBody, want) {
+			t.Fatalf("users.go missing %q\n%s", want, tableBody)
+		}
+	}
+	if strings.Contains(tableBody, "type Users struct") {
+		t.Fatalf("users.go should not contain model struct\n%s", tableBody)
+	}
+
+	modelBody := string(modelUsers)
+	for _, want := range []string{
+		"package models",
 		"type Users struct",
 		"LastLoginAt *time.Time",
 		"`db:\"last_login_at\"`",
@@ -124,8 +142,8 @@ func TestGenerateUsersFileContents(t *testing.T) {
 		"UserStatus",
 		"`db:\"status\"`",
 	} {
-		if !strings.Contains(body, want) {
-			t.Fatalf("users.go missing %q\n%s", want, body)
+		if !strings.Contains(modelBody, want) {
+			t.Fatalf("models/users.go missing %q\n%s", want, modelBody)
 		}
 	}
 }
@@ -142,15 +160,16 @@ func TestGenerateEnumsFile(t *testing.T) {
 	}
 	var enums []byte
 	for _, f := range files {
-		if f.Path == "enums.go" {
+		if f.Path == "enums.go" && f.Dir == "models" {
 			enums = f.Content
 		}
 	}
 	if enums == nil {
-		t.Fatal("enums.go not generated")
+		t.Fatal("models/enums.go not generated")
 	}
 	body := string(enums)
 	for _, want := range []string{
+		"package models",
 		"type UserStatus string",
 		"UserStatusActive",
 		`UserStatusActive   UserStatus = "active"`,

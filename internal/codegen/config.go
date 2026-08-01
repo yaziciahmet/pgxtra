@@ -1,6 +1,9 @@
 package codegen
 
-import "io/fs"
+import (
+	"io/fs"
+	"path"
+)
 
 // Config controls code generation output.
 type Config struct {
@@ -13,4 +16,12 @@ type Config struct {
 
 func (c Config) queryImport() string {
 	return c.ImportPath + "/query"
+}
+
+func (c Config) modelsPackage() string {
+	return "models"
+}
+
+func (c Config) modelsImport() string {
+	return path.Join(path.Dir(c.ImportPath), c.modelsPackage())
 }

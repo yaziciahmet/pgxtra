@@ -17,6 +17,7 @@ import (
 type File struct {
 	Path    string // relative to output root
 	Content []byte
+	Dir     string // "db" (default) or "models"
 }
 
 // Generate renders all files for the given schema.
@@ -35,6 +36,12 @@ func Generate(cfg Config, db schema.Database) ([]File, error) {
 			return nil, fmt.Errorf("codegen table %s: %w", table.Name, err)
 		}
 		files = append(files, File{Path: tableFileName(table.Name), Content: content})
+
+		modelContent, err := formatSource(emitModelFile(cfg, table))
+		if err != nil {
+			return nil, fmt.Errorf("codegen model %s: %w", table.Name, err)
+		}
+		files = append(files, File{Path: tableFileName(table.Name), Content: modelContent, Dir: "models"})
 	}
 
 	dbContent, err := formatSource(emitDB(cfg))
@@ -54,7 +61,7 @@ func Generate(cfg Config, db schema.Database) ([]File, error) {
 		if err != nil {
 			return nil, fmt.Errorf("codegen enums.go: %w", err)
 		}
-		files = append(files, File{Path: "enums.go", Content: formatted})
+		files = append(files, File{Path: "enums.go", Content: formatted, Dir: "models"})
 	}
 
 	if cfg.QueryFS != nil {
@@ -75,9 +82,15 @@ func Generate(cfg Config, db schema.Database) ([]File, error) {
 }
 
 // WriteFiles writes generated files to dir, creating directories as needed.
+// Model files (Dir == "models") are written to a sibling models/ directory.
 func WriteFiles(dir string, files []File) error {
+	modelsDir := filepath.Join(filepath.Dir(dir), "models")
 	for _, f := range files {
-		path := filepath.Join(dir, f.Path)
+		base := dir
+		if f.Dir == "models" {
+			base = modelsDir
+		}
+		path := filepath.Join(base, f.Path)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
 			return err
 		}
