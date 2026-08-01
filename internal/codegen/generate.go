@@ -1,0 +1,204 @@
+package codegen
+
+import (
+	"bytes"
+	"fmt"
+	"go/format"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+
+	"github.com/yaziciahmet/typg/internal/schema"
+)
+
+// File is a generated output file.
+type File struct {
+	Path    string // relative to output root
+	Content []byte
+	Dir     string // "db" (default) or "models"
+}
+
+// Generate renders all files for the given schema.
+func Generate(cfg Config, db schema.Database) ([]File, error) {
+	if cfg.Package == "" {
+		return nil, fmt.Errorf("codegen: package is required")
+	}
+	if cfg.ImportPath == "" {
+		return nil, fmt.Errorf("codegen: import path is required")
+	}
+
+	var files []File
+	for _, table := range db.Tables {
+		content, err := formatSource(emitTable(cfg, table))
+		if err != nil {
+			return nil, fmt.Errorf("codegen table %s: %w", table.Name, err)
+		}
+		files = append(files, File{Path: tableFileName(table.Name), Content: content})
+
+		modelContent, err := formatSource(emitModelFile(cfg, table))
+		if err != nil {
+			return nil, fmt.Errorf("codegen model %s: %w", table.Name, err)
+		}
+		files = append(files, File{Path: tableFileName(table.Name), Content: modelContent, Dir: "models"})
+	}
+
+	dbContent, err := formatSource(emitDB(cfg))
+	if err != nil {
+		return nil, fmt.Errorf("codegen db.go: %w", err)
+	}
+	files = append(files, File{Path: "db.go", Content: dbContent})
+
+	versionContent, err := formatSource(emitVersion(cfg))
+	if err != nil {
+		return nil, fmt.Errorf("codegen version.go: %w", err)
+	}
+	files = append(files, File{Path: "version.go", Content: versionContent})
+
+	if enumContent := emitEnums(cfg, db.Enums); len(enumContent) > 0 {
+		formatted, err := formatSource(enumContent)
+		if err != nil {
+			return nil, fmt.Errorf("codegen enums.go: %w", err)
+		}
+		files = append(files, File{Path: "enums.go", Content: formatted, Dir: "models"})
+	}
+
+	if cfg.QueryFS != nil {
+		embedded, err := embedQueryFS(cfg.QueryFS)
+		if err != nil {
+			return nil, fmt.Errorf("codegen embed query: %w", err)
+		}
+		files = append(files, embedded...)
+	} else if cfg.QuerySource != "" {
+		embedded, err := embedQueryDir(cfg.QuerySource)
+		if err != nil {
+			return nil, fmt.Errorf("codegen embed query: %w", err)
+		}
+		files = append(files, embedded...)
+	}
+
+	return files, nil
+}
+
+// WriteFiles writes generated files to dir, creating directories as needed.
+// Model files (Dir == "models") are written to a sibling models/ directory.
+func WriteFiles(dir string, files []File) error {
+	modelsDir := filepath.Join(filepath.Dir(dir), "models")
+	for _, f := range files {
+		base := dir
+		if f.Dir == "models" {
+			base = modelsDir
+		}
+		path := filepath.Join(base, f.Path)
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return err
+		}
+		if err := os.WriteFile(path, f.Content, 0o644); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func tableFileName(table string) string {
+	return table + ".go"
+}
+
+func formatSource(src []byte) ([]byte, error) {
+	formatted, err := format.Source(src)
+	if err != nil {
+		return nil, fmt.Errorf("%w\n%s", err, src)
+	}
+	return formatted, nil
+}
+
+func embedQueryDir(sourceDir string) ([]File, error) {
+	var files []File
+	err := filepath.WalkDir(sourceDir, func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			if d.Name() == "querytest" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !isQuerySourceFile(d.Name()) {
+			return nil
+		}
+		rel, err := filepath.Rel(sourceDir, path)
+		if err != nil {
+			return err
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		return appendQueryFile(&files, rel, data)
+	})
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return files, nil
+}
+
+func embedQueryFS(source fs.FS) ([]File, error) {
+	var files []File
+	err := fs.WalkDir(source, ".", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			return nil
+		}
+		if !isQuerySourceFile(d.Name()) {
+			return nil
+		}
+		data, err := fs.ReadFile(source, path)
+		if err != nil {
+			return err
+		}
+		return appendQueryFile(&files, path, data)
+	})
+	if err != nil {
+		return nil, err
+	}
+	sort.Slice(files, func(i, j int) bool { return files[i].Path < files[j].Path })
+	return files, nil
+}
+
+func isQuerySourceFile(name string) bool {
+	if name == "embed.go" {
+		return false
+	}
+	return strings.HasSuffix(name, ".go") && !strings.HasSuffix(name, "_test.go")
+}
+
+func appendQueryFile(files *[]File, rel string, data []byte) error {
+	content, err := rewriteQueryPackage(data, rel)
+	if err != nil {
+		return err
+	}
+	formatted, err := formatSource(content)
+	if err != nil {
+		return fmt.Errorf("embed %s: %w", rel, err)
+	}
+	*files = append(*files, File{Path: filepath.Join("query", filepath.ToSlash(rel)), Content: formatted})
+	return nil
+}
+
+func rewriteQueryPackage(data []byte, rel string) ([]byte, error) {
+	_ = rel
+	return bytes.TrimSpace(data), nil
+}
+
+func emitVersion(cfg Config) []byte {
+	var b strings.Builder
+	fmt.Fprintf(&b, "// Code generated by typg %s. DO NOT EDIT.\n\n", cfg.TypgVersion)
+	fmt.Fprintf(&b, "package %s\n\n", cfg.Package)
+	fmt.Fprintf(&b, "const TypgVersion = %q\n", cfg.TypgVersion)
+	return []byte(b.String())
+}

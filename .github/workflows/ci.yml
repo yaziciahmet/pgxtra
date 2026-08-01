@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache-dependency-path: |
+            go.sum
+            examples/basic/go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Build CLI
+        run: go build -o /dev/null ./cmd/typg
+
+      - name: Build example
+        working-directory: examples/basic
+        run: |
+          go mod tidy
+          go build ./...
