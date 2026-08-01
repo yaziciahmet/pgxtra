@@ -1,0 +1,175 @@
+package query
+
+import "strconv"
+
+type columnFrag struct {
+	col Column
+}
+
+func (c columnFrag) compile(comp *Compiler) {
+	comp.Write(c.col.Qualifier())
+}
+
+type tableFrag struct {
+	table Table
+}
+
+func (t tableFrag) compile(c *Compiler) {
+	c.Write(t.table.SQLName())
+	if alias := t.table.Alias(); alias != "" && alias != t.table.SQLName() {
+		c.Write(" AS ")
+		c.Write(alias)
+	}
+}
+
+// SelectBuilder builds SELECT statements.
+type SelectBuilder struct {
+	with    *WithBuilder
+	prefix  []fragment
+	suffix  []fragment
+	cols    []fragment
+	from    Table
+	joins   []joinClause
+	wheres  []Expr
+	groupBy []fragment
+	having  []Expr
+	orderBy []orderClause
+	limit   *int
+	offset  *int
+}
+
+type joinClause struct {
+	kind  string
+	table Table
+	on    Expr
+}
+
+// Select starts a SELECT for the given columns.
+func Select(cols ...Column) *SelectBuilder {
+	s := &SelectBuilder{}
+	for _, col := range cols {
+		s.cols = append(s.cols, columnFrag{col: col})
+	}
+	return s
+}
+
+// Prefix injects SQL before SELECT.
+func (s *SelectBuilder) Prefix(sql string, args ...any) *SelectBuilder {
+	s.prefix = append(s.prefix, Raw{sql: sql, args: args})
+	return s
+}
+
+// Suffix injects SQL after the statement.
+func (s *SelectBuilder) Suffix(sql string, args ...any) *SelectBuilder {
+	s.suffix = append(s.suffix, Raw{sql: sql, args: args})
+	return s
+}
+
+// From sets the FROM table.
+func (s *SelectBuilder) From(t Table) *SelectBuilder {
+	s.from = t
+	return s
+}
+
+// Join adds an INNER JOIN.
+func (s *SelectBuilder) Join(t Table, on Expr) *SelectBuilder {
+	s.joins = append(s.joins, joinClause{kind: "INNER JOIN", table: t, on: on})
+	return s
+}
+
+// LeftJoin adds a LEFT JOIN.
+func (s *SelectBuilder) LeftJoin(t Table, on Expr) *SelectBuilder {
+	s.joins = append(s.joins, joinClause{kind: "LEFT JOIN", table: t, on: on})
+	return s
+}
+
+// Where adds an AND condition.
+func (s *SelectBuilder) Where(e Expr) *SelectBuilder {
+	s.wheres = append(s.wheres, e)
+	return s
+}
+
+// Build renders SQL and arguments.
+func (s *SelectBuilder) Build() (string, []any) {
+	c := NewCompiler()
+	s.compile(c)
+	return c.SQL(), c.Args()
+}
+
+func (s *SelectBuilder) compile(c *Compiler) {
+	if s.with != nil {
+		s.with.compilePrefix(c)
+	}
+	for _, p := range s.prefix {
+		p.compile(c)
+	}
+	c.Write("SELECT ")
+	for i, col := range s.cols {
+		if i > 0 {
+			c.Write(", ")
+		}
+		col.compile(c)
+	}
+	if s.from != nil {
+		c.Write(" FROM ")
+		tableFrag{table: s.from}.compile(c)
+	}
+	for _, j := range s.joins {
+		c.Write(" ")
+		c.Write(j.kind)
+		c.Write(" ")
+		tableFrag{table: j.table}.compile(c)
+		c.Write(" ON ")
+		j.on.compile(c)
+	}
+	if len(s.wheres) > 0 {
+		c.Write(" WHERE ")
+		for i, w := range s.wheres {
+			if i > 0 {
+				c.Write(" AND ")
+			}
+			w.compile(c)
+		}
+	}
+	if len(s.groupBy) > 0 {
+		c.Write(" GROUP BY ")
+		for i, col := range s.groupBy {
+			if i > 0 {
+				c.Write(", ")
+			}
+			col.compile(c)
+		}
+	}
+	if len(s.having) > 0 {
+		c.Write(" HAVING ")
+		for i, h := range s.having {
+			if i > 0 {
+				c.Write(" AND ")
+			}
+			h.compile(c)
+		}
+	}
+	if len(s.orderBy) > 0 {
+		c.Write(" ORDER BY ")
+		for i, o := range s.orderBy {
+			if i > 0 {
+				c.Write(", ")
+			}
+			c.Write(o.expr)
+			if o.desc {
+				c.Write(" DESC")
+			}
+		}
+	}
+	if s.limit != nil {
+		c.Write(" LIMIT ")
+		c.Write(strconv.Itoa(*s.limit))
+	}
+	if s.offset != nil {
+		c.Write(" OFFSET ")
+		c.Write(strconv.Itoa(*s.offset))
+	}
+	for _, p := range s.suffix {
+		p.compile(c)
+	}
+}
