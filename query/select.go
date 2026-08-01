@@ -75,6 +75,18 @@ func (s *SelectBuilder) LeftJoin(t Table, on Expr) *SelectBuilder {
 	return s
 }
 
+// RightJoin adds a RIGHT JOIN.
+func (s *SelectBuilder) RightJoin(t Table, on Expr) *SelectBuilder {
+	s.joins = append(s.joins, joinClause{kind: "RIGHT JOIN", table: t, on: on})
+	return s
+}
+
+// CrossJoin adds a CROSS JOIN.
+func (s *SelectBuilder) CrossJoin(t Table) *SelectBuilder {
+	s.joins = append(s.joins, joinClause{kind: "CROSS JOIN", table: t})
+	return s
+}
+
 // Where adds an AND condition.
 func (s *SelectBuilder) Where(e Expr) *SelectBuilder {
 	s.wheres = append(s.wheres, e)
@@ -149,8 +161,10 @@ func (s *SelectBuilder) compile(c *Compiler) {
 		c.Write(j.kind)
 		c.Write(" ")
 		tableFrag{table: j.table}.compile(c)
-		c.Write(" ON ")
-		j.on.compile(c)
+		if j.on != nil {
+			c.Write(" ON ")
+			j.on.compile(c)
+		}
 	}
 	compileWhere(c, s.wheres)
 	if len(s.groupBy) > 0 {

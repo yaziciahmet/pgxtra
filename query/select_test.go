@@ -125,3 +125,19 @@ func TestSelectAndOr(t *testing.T) {
 		t.Fatalf("args = %v", args)
 	}
 }
+
+func TestSelectRightCrossJoin(t *testing.T) {
+	sql, args := query.Select(querytest.TUsersName, querytest.TPostTitle).
+		From(querytest.TUsers).
+		RightJoin(querytest.TPosts, query.Eq(querytest.TUsersID, querytest.TPostUserID)).
+		CrossJoin(query.Named("archived")).
+		Build()
+
+	want := "SELECT users.name, posts.title FROM users RIGHT JOIN posts ON users.id = posts.user_id CROSS JOIN archived"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(args) != 0 {
+		t.Fatalf("args = %v", args)
+	}
+}
