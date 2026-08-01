@@ -10,7 +10,7 @@ import (
 	"github.com/yaziciahmet/pgxtra/internal/codegen"
 	"github.com/yaziciahmet/pgxtra/internal/schema"
 	"github.com/yaziciahmet/pgxtra/internal/testschema"
-	"github.com/yaziciahmet/pgxtra/query"
+	"github.com/yaziciahmet/pgxtra/internal/query"
 )
 
 func TestGenerateCompile(t *testing.T) {

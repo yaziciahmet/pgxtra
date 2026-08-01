@@ -5,18 +5,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
-	"github.com/jackc/pgx/v5/pgxpool"
-
-	"github.com/yaziciahmet/pgxtra/internal/codegen"
-	"github.com/yaziciahmet/pgxtra/internal/gomod"
-	"github.com/yaziciahmet/pgxtra/internal/introspect"
-	"github.com/yaziciahmet/pgxtra/query"
+	"github.com/yaziciahmet/pgxtra/generate"
 )
-
-const version = "0.1.0"
 
 func main() {
 	if len(os.Args) < 2 {
@@ -30,7 +22,7 @@ func main() {
 			os.Exit(1)
 		}
 	case "version":
-		fmt.Println(version)
+		fmt.Println(generate.Version)
 	default:
 		usage()
 		os.Exit(2)
@@ -47,20 +39,13 @@ func runGenerate(args []string) error {
 	out := fs.String("out", "./gen/db", "output directory")
 	schemaName := fs.String("schema", "public", "postgres schema")
 	exclude := fs.String("exclude-tables", "", "comma-separated tables to skip")
-	querySrc := fs.String("query-source", "", "path to pgxtra/query (default: embedded builder)")
+	querySrc := fs.String("query-source", "", "path to internal/query (default: embedded builder)")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
 	if *dsn == "" {
 		return fmt.Errorf("--dsn is required")
 	}
-
-	ctx := context.Background()
-	pool, err := pgxpool.New(ctx, *dsn)
-	if err != nil {
-		return err
-	}
-	defer pool.Close()
 
 	var excludeTables []string
 	for _, t := range strings.Split(*exclude, ",") {
@@ -69,37 +54,11 @@ func runGenerate(args []string) error {
 		}
 	}
 
-	db, err := introspect.Postgres(ctx, pool, introspect.Options{
+	return generate.Generate(context.Background(), generate.Options{
+		DSN:           *dsn,
+		OutDir:        *out,
 		Schema:        *schemaName,
 		ExcludeTables: excludeTables,
+		QuerySource:   *querySrc,
 	})
-	if err != nil {
-		return err
-	}
-
-	importPath, err := gomod.ModuleImportPath(*out)
-	if err != nil {
-		return err
-	}
-	pkg := filepath.Base(filepath.Clean(*out))
-	if pkg == "" || pkg == "." {
-		pkg = "db"
-	}
-
-	cfg := codegen.Config{
-		Package:       pkg,
-		ImportPath:    importPath,
-		PgxtraVersion: version,
-	}
-	if *querySrc != "" {
-		cfg.QuerySource = *querySrc
-	} else {
-		cfg.QueryFS = query.EmbeddedFS
-	}
-
-	files, err := codegen.Generate(cfg, db)
-	if err != nil {
-		return err
-	}
-	return codegen.WriteFiles(*out, files)
 }
