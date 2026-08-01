@@ -33,6 +33,12 @@ type SelectBuilder struct {
 // Select starts a SELECT for the given columns.
 func Select(cols ...Column) *SelectBuilder {
 	s := &SelectBuilder{}
+	s.Columns(cols...)
+	return s
+}
+
+// Columns appends typed columns to the SELECT list.
+func (s *SelectBuilder) Columns(cols ...Column) *SelectBuilder {
 	for _, col := range cols {
 		s.cols = append(s.cols, columnFrag{col: col})
 	}

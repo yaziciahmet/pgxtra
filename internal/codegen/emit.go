@@ -226,6 +226,7 @@ func emitDB(cfg Config) []byte {
 		"func Delete(t query.Table) *query.DeleteBuilder { return query.Delete(t) }",
 		"func With(name string) *query.WithBuilder { return query.With(name) }",
 		"func Col(table, column string) query.Column { return query.Col(table, column) }",
+		"func NewRawCol(sql string, args ...any) query.Column { return query.NewRawCol(sql, args...) }",
 		"func Named(name string) query.Table { return query.Named(name) }",
 		"func Assign(col query.Column, val any) query.Assignment { return query.Assign(col, val) }",
 		"func RawExpr(sql string, args ...any) query.Expr { return query.RawExpr(sql, args...) }",

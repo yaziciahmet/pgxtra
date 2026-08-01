@@ -56,3 +56,20 @@ func TestStringILike(t *testing.T) {
 		t.Fatalf("args = %v", args)
 	}
 }
+
+func TestSelectRaw(t *testing.T) {
+	sql, args := db.Select(
+		db.Users.ID,
+		db.NewRawCol("COALESCE(?, ?) AS display", db.Users.Name, db.Users.Email),
+	).
+		From(db.Users).
+		Build()
+
+	want := "SELECT users.id, COALESCE(users.name, users.email) AS display FROM users"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(args) != 0 {
+		t.Fatalf("args = %v", args)
+	}
+}

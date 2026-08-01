@@ -34,6 +34,19 @@ func TestCompilerManyPlaceholders(t *testing.T) {
 	}
 }
 
+func TestWriteArgColumn(t *testing.T) {
+	c := NewCompiler()
+	writeInterpolated(c, "COALESCE(?, ?)", []any{Col("users", "verified_name"), Col("users", "provided_name")})
+
+	want := "COALESCE(users.verified_name, users.provided_name)"
+	if got := c.SQL(); got != want {
+		t.Fatalf("sql = %q", got)
+	}
+	if len(c.Args()) != 0 {
+		t.Fatalf("args = %v", c.Args())
+	}
+}
+
 func TestRawExprLiteralQuestionMark(t *testing.T) {
 	c := NewCompiler()
 	RawExpr("jsonb ? key", "??").compile(c)

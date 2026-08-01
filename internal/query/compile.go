@@ -49,11 +49,19 @@ func (c *Compiler) Args() []any {
 	return c.args
 }
 
+func writeArg(c *Compiler, v any) {
+	if col, ok := v.(Column); ok {
+		c.Write(col.Qualifier())
+		return
+	}
+	c.Write(c.Arg(v))
+}
+
 func writeInterpolated(c *Compiler, sql string, args []any) {
 	argIdx := 0
 	for i := 0; i < len(sql); i++ {
 		if sql[i] == '?' && argIdx < len(args) {
-			c.Write(c.Arg(args[argIdx]))
+			writeArg(c, args[argIdx])
 			argIdx++
 			continue
 		}
@@ -81,6 +89,10 @@ type columnFrag struct {
 }
 
 func (f columnFrag) compile(c *Compiler) {
+	if cc, ok := f.col.(interface{ compile(c *Compiler) }); ok {
+		cc.compile(c)
+		return
+	}
 	c.Write(f.col.Qualifier())
 }
 
