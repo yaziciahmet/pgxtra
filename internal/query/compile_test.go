@@ -47,6 +47,19 @@ func TestWriteArgColumn(t *testing.T) {
 	}
 }
 
+func TestWriteInterpolatedNoArgs(t *testing.T) {
+	c := NewCompiler()
+	writeInterpolated(c, "count(*) OVER (PARTITION BY status)", nil)
+
+	want := "count(*) OVER (PARTITION BY status)"
+	if got := c.SQL(); got != want {
+		t.Fatalf("sql = %q", got)
+	}
+	if len(c.Args()) != 0 {
+		t.Fatalf("args = %v", c.Args())
+	}
+}
+
 func TestRawExprLiteralQuestionMark(t *testing.T) {
 	c := NewCompiler()
 	RawExpr("jsonb ? key", "??").compile(c)

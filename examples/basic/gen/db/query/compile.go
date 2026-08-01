@@ -58,14 +58,25 @@ func writeArg(c *Compiler, v any) {
 }
 
 func writeInterpolated(c *Compiler, sql string, args []any) {
+	if len(args) == 0 {
+		c.Write(sql)
+		return
+	}
+
 	argIdx := 0
+	start := 0
 	for i := 0; i < len(sql); i++ {
 		if sql[i] == '?' && argIdx < len(args) {
+			if i > start {
+				c.Write(sql[start:i])
+			}
 			writeArg(c, args[argIdx])
 			argIdx++
-			continue
+			start = i + 1
 		}
-		c.Write(string(sql[i]))
+	}
+	if start < len(sql) {
+		c.Write(sql[start:])
 	}
 }
 
