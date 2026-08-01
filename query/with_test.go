@@ -61,23 +61,3 @@ func TestCTEModifyingInsertFromSelect(t *testing.T) {
 		t.Fatalf("args = %v", args)
 	}
 }
-
-func TestInSubqueryArgNumbering(t *testing.T) {
-	inner := query.Select(querytest.TUsersID).
-		From(querytest.TUsers).
-		Where(querytest.TUsersStatus.Eq("active"))
-
-	sql, args := query.Select(querytest.TUsersName).
-		From(querytest.TUsers).
-		Where(query.InSubquery(querytest.TUsersID, inner)).
-		Where(querytest.TUsersName.Eq("alice")).
-		Build()
-
-	want := "SELECT users.name FROM users WHERE users.id IN (SELECT users.id FROM users WHERE users.status = $1) AND users.name = $2"
-	if sql != want {
-		t.Fatalf("sql = %q", sql)
-	}
-	if len(args) != 2 || args[0] != "active" || args[1] != "alice" {
-		t.Fatalf("args = %v", args)
-	}
-}

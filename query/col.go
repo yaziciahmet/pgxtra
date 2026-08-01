@@ -21,35 +21,3 @@ func (r rawTable) Alias() string   { return string(r) }
 
 // Named returns a table reference by name (CTEs, ad-hoc).
 func Named(name string) Table { return rawTable(name) }
-
-type subquery struct {
-	s *SelectBuilder
-}
-
-// Subquery wraps a select for use in expressions.
-func Subquery(s *SelectBuilder) Expr {
-	return subquery{s: s}
-}
-
-func (q subquery) compile(c *Compiler) {
-	c.Write("(")
-	q.s.compile(c)
-	c.Write(")")
-}
-
-type inSubquery struct {
-	col Column
-	s   *SelectBuilder
-}
-
-// InSubquery builds col IN (SELECT ...).
-func InSubquery(col Column, s *SelectBuilder) Expr {
-	return inSubquery{col: col, s: s}
-}
-
-func (e inSubquery) compile(c *Compiler) {
-	c.Write(e.col.Qualifier())
-	c.Write(" IN (")
-	e.s.compile(c)
-	c.Write(")")
-}
