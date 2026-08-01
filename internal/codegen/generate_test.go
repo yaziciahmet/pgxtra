@@ -121,6 +121,7 @@ func TestGenerateUsersFileContents(t *testing.T) {
 		"func (c usersBalanceCol) In(vals ...decimal.Decimal)",
 		"func (c usersStatusCol) In(vals ...models.UserStatus)",
 		"func (c usersEmailCol) ILike(pattern string)",
+		"func (c usersTagsCol) Contains(v string)",
 		"func (t usersTable) Insert()",
 	} {
 		if !strings.Contains(tableBody, want) {

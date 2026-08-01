@@ -57,6 +57,21 @@ func TestCompareValue(t *testing.T) {
 	}
 }
 
+func TestContains(t *testing.T) {
+	sql, args := query.Select(querytest.TUsersID).
+		From(querytest.TUsers).
+		Where(query.Contains(query.Col("users", "tags"), "fraud")).
+		Build()
+
+	want := "SELECT users.id FROM users WHERE users.tags @> ARRAY[$1]"
+	if sql != want {
+		t.Fatalf("sql = %q", sql)
+	}
+	if len(args) != 1 || args[0] != "fraud" {
+		t.Fatalf("args = %v", args)
+	}
+}
+
 func TestCompareColumn(t *testing.T) {
 	sql, args := query.Select(querytest.TUsersID).
 		From(querytest.TUsers).

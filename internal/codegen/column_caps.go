@@ -7,15 +7,16 @@ import (
 )
 
 type colCaps struct {
-	order bool // Gt, Gte, Lt, Lte
-	in    bool // In
-	like  bool // Like, ILike
+	order    bool // Gt, Gte, Lt, Lte
+	in       bool // In
+	like     bool // Like, ILike
+	contains bool // Contains (array columns)
 }
 
 func columnCapabilities(col schema.Column) colCaps {
 	gt := col.Go
 	if strings.HasPrefix(gt.Name, "[]") {
-		return colCaps{}
+		return colCaps{contains: true}
 	}
 	switch gt.Name {
 	case "json.RawMessage":

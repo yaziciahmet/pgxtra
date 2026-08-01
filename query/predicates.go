@@ -171,3 +171,20 @@ func (e nullExpr) compile(c *Compiler) {
 		c.Write(" IS NULL")
 	}
 }
+
+type containsExpr struct {
+	col Column
+	val any
+}
+
+// Contains builds col @> ARRAY[val] (postgres array containment).
+func Contains(col Column, val any) Expr {
+	return containsExpr{col: col, val: val}
+}
+
+func (e containsExpr) compile(c *Compiler) {
+	c.Write(e.col.Qualifier())
+	c.Write(" @> ARRAY[")
+	c.Write(c.Arg(e.val))
+	c.Write("]")
+}

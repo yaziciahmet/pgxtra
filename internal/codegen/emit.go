@@ -131,6 +131,11 @@ func emitColumnMethods(b *strings.Builder, imps *imports, cType string, col sche
 		fmt.Fprintf(b, "func (c %s) ILike(pattern string) query.Expr { return query.ILike(c, pattern) }\n", cType)
 	}
 
+	if caps.contains {
+		elemType := arrayElemType(imps, col.Go)
+		fmt.Fprintf(b, "func (c %s) Contains(v %s) query.Expr { return query.Contains(c, v) }\n", cType, elemType)
+	}
+
 	fmt.Fprintf(b, "func (c %s) IsNull() query.Expr { return query.IsNull(c) }\n", cType)
 	fmt.Fprintf(b, "func (c %s) NotNull() query.Expr { return query.NotNull(c) }\n\n", cType)
 }
@@ -152,6 +157,10 @@ func emitInMethod(b *strings.Builder, imps *imports, cType string, gt schema.GoT
 }
 
 func inMethodType(imps *imports, gt schema.GoType) string {
+	return arrayElemType(imps, gt)
+}
+
+func arrayElemType(imps *imports, gt schema.GoType) string {
 	if gt.IsEnum {
 		return imps.modelsTypeExpr(gt)
 	}
@@ -232,6 +241,7 @@ func emitDB(cfg Config) []byte {
 		"func In(col query.Column, values ...any) query.Expr { return query.In(col, values...) }",
 		"func Like(col query.Column, pattern string) query.Expr { return query.Like(col, pattern) }",
 		"func ILike(col query.Column, pattern string) query.Expr { return query.ILike(col, pattern) }",
+		"func Contains(col query.Column, val any) query.Expr { return query.Contains(col, val) }",
 		"func IsNull(col query.Column) query.Expr { return query.IsNull(col) }",
 		"func NotNull(col query.Column) query.Expr { return query.NotNull(col) }",
 		"func And(exprs ...query.Expr) query.Expr { return query.And(exprs...) }",

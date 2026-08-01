@@ -20,7 +20,7 @@ func TestColumnCaps(t *testing.T) {
 		{
 			name: "array",
 			col:  schema.Column{Go: schema.GoType{Name: "[]string"}},
-			want: colCaps{},
+			want: colCaps{contains: true},
 		},
 		{
 			name: "json",
