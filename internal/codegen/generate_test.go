@@ -58,7 +58,7 @@ import (
 func TestSmoke(t *testing.T) {
 	sql, args := db.Select(db.Users.ID, db.Posts.Title).
 		From(db.Users).
-		Join(db.Posts, db.Users.ID.Eq(db.Posts.UserID)).
+		Join(db.Posts, db.Users.ID.EqCol(db.Posts.UserID)).
 		Where(db.Users.Status.Eq("active")).
 		Build()
 	if sql == "" {
@@ -114,15 +114,26 @@ func TestGenerateUsersFileContents(t *testing.T) {
 	for _, want := range []string{
 		"var Users = usersTable",
 		"usersIDCol",
-		"func (c usersIDCol) Eq(rhs any)",
+		"func (c usersIDCol) Eq(v int64)",
+		"func (c usersIDCol) EqCol(other query.Column)",
 		"func (c usersIDCol) In(vals ...int64)",
 		"func (c usersExternalIDCol) In(vals ...uuid.UUID)",
 		"func (c usersBalanceCol) In(vals ...decimal.Decimal)",
 		"func (c usersStatusCol) In(vals ...models.UserStatus)",
+		"func (c usersEmailCol) ILike(pattern string)",
 		"func (t usersTable) Insert()",
 	} {
 		if !strings.Contains(tableBody, want) {
 			t.Fatalf("users.go missing %q\n%s", want, tableBody)
+		}
+	}
+	for _, bad := range []string{
+		"func (c usersTagsCol) In(",
+		"func (c usersTagsCol) Gt(",
+		"func (c usersMetaCol) Gt(",
+	} {
+		if strings.Contains(tableBody, bad) {
+			t.Fatalf("users.go should not contain %q", bad)
 		}
 	}
 	if strings.Contains(tableBody, "type Users struct") {

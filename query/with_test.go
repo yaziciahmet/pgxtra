@@ -23,7 +23,7 @@ func TestCTEUpdateFrom(t *testing.T) {
 		Set(querytest.TUsersStatus, "inactive").
 		Set(querytest.TUsersUpdatedAt, now).
 		From("stale").
-		Where(query.Eq(querytest.TUsersID, query.Col("stale", "id"))).
+		Where(query.EqCol(querytest.TUsersID, query.Col("stale", "id"))).
 		Build()
 
 	want := "WITH stale AS (SELECT users.id FROM users WHERE users.last_login_at < $1 AND users.status = $2) UPDATE users SET status = $3, updated_at = $4 FROM stale WHERE users.id = stale.id"
@@ -76,7 +76,7 @@ func TestCTEMultiAsNextSelect(t *testing.T) {
 		AsNext("recent_posts", recent).
 		Select(querytest.TUsersName, querytest.TPostTitle).
 		From(querytest.TUsers).
-		Join(querytest.TPosts, query.Eq(querytest.TUsersID, querytest.TPostUserID)).
+		Join(querytest.TPosts, query.EqCol(querytest.TUsersID, querytest.TPostUserID)).
 		Build()
 
 	want := "WITH active_users AS (SELECT users.id, users.name FROM users WHERE users.status = $1), recent_posts AS (SELECT posts.title FROM posts WHERE posts.published = $2) SELECT users.name, posts.title FROM users INNER JOIN posts ON users.id = posts.user_id"

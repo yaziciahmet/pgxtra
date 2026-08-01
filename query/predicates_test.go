@@ -60,7 +60,7 @@ func TestCompareValue(t *testing.T) {
 func TestCompareColumn(t *testing.T) {
 	sql, args := query.Select(querytest.TUsersID).
 		From(querytest.TUsers).
-		Join(querytest.TPosts, query.Eq(querytest.TUsersID, querytest.TPostUserID)).
+		Join(querytest.TPosts, query.EqCol(querytest.TUsersID, querytest.TPostUserID)).
 		Where(query.NotNull(querytest.TUsersEmail)).
 		Build()
 

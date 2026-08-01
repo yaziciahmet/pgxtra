@@ -95,15 +95,51 @@ func emitColumnType(b *strings.Builder, imps *imports, tableName string, col sch
 	fmt.Fprintf(b, "func (%s) Qualifier() string { return %q }\n", cType, qual)
 	fmt.Fprintf(b, "func (%s) Table() query.Table { return %s }\n\n", cType, tableVar(tableName))
 
-	emitCompareMethods(b, cType)
-	emitInMethod(b, imps, cType, col.Go)
+	emitColumnMethods(b, imps, cType, col)
 }
 
-func emitCompareMethods(b *strings.Builder, cType string) {
-	for _, op := range []string{"Eq", "Ne", "Gt", "Gte", "Lt", "Lte"} {
-		fmt.Fprintf(b, "func (c %s) %s(rhs any) query.Expr { return query.%s(c, rhs) }\n", cType, op, op)
+func emitColumnMethods(b *strings.Builder, imps *imports, cType string, col schema.Column) {
+	caps := columnCapabilities(col)
+	valType := valueMethodType(imps, col.Go)
+
+	for _, op := range []struct{ name, query string }{
+		{"Eq", "Eq"},
+		{"Ne", "Ne"},
+	} {
+		fmt.Fprintf(b, "func (c %s) %s(v %s) query.Expr { return query.%s(c, v) }\n", cType, op.name, valType, op.query)
+		fmt.Fprintf(b, "func (c %s) %sCol(other query.Column) query.Expr { return query.%sCol(c, other) }\n", cType, op.name, op.query)
 	}
-	b.WriteString("\n")
+
+	if caps.order {
+		for _, op := range []struct{ name, query string }{
+			{"Gt", "Gt"},
+			{"Gte", "Gte"},
+			{"Lt", "Lt"},
+			{"Lte", "Lte"},
+		} {
+			fmt.Fprintf(b, "func (c %s) %s(v %s) query.Expr { return query.%s(c, v) }\n", cType, op.name, valType, op.query)
+			fmt.Fprintf(b, "func (c %s) %sCol(other query.Column) query.Expr { return query.%sCol(c, other) }\n", cType, op.name, op.query)
+		}
+	}
+
+	if caps.in {
+		emitInMethod(b, imps, cType, col.Go)
+	}
+
+	if caps.like {
+		fmt.Fprintf(b, "func (c %s) Like(pattern string) query.Expr { return query.Like(c, pattern) }\n", cType)
+		fmt.Fprintf(b, "func (c %s) ILike(pattern string) query.Expr { return query.ILike(c, pattern) }\n", cType)
+	}
+
+	fmt.Fprintf(b, "func (c %s) IsNull() query.Expr { return query.IsNull(c) }\n", cType)
+	fmt.Fprintf(b, "func (c %s) NotNull() query.Expr { return query.NotNull(c) }\n\n", cType)
+}
+
+func valueMethodType(imps *imports, gt schema.GoType) string {
+	if gt.IsEnum {
+		return imps.modelsTypeExpr(gt)
+	}
+	return imps.typeExpr(gt)
 }
 
 func emitInMethod(b *strings.Builder, imps *imports, cType string, gt schema.GoType) {
@@ -181,12 +217,18 @@ func emitDB(cfg Config) []byte {
 		"func Named(name string) query.Table { return query.Named(name) }",
 		"func Assign(col query.Column, val any) query.Assignment { return query.Assign(col, val) }",
 		"func RawExpr(sql string, args ...any) query.Expr { return query.RawExpr(sql, args...) }",
-		"func Eq(col query.Column, rhs any) query.Expr { return query.Eq(col, rhs) }",
-		"func Ne(col query.Column, rhs any) query.Expr { return query.Ne(col, rhs) }",
-		"func Gt(col query.Column, rhs any) query.Expr { return query.Gt(col, rhs) }",
-		"func Gte(col query.Column, rhs any) query.Expr { return query.Gte(col, rhs) }",
-		"func Lt(col query.Column, rhs any) query.Expr { return query.Lt(col, rhs) }",
-		"func Lte(col query.Column, rhs any) query.Expr { return query.Lte(col, rhs) }",
+		"func Eq(col query.Column, val any) query.Expr { return query.Eq(col, val) }",
+		"func EqCol(col, other query.Column) query.Expr { return query.EqCol(col, other) }",
+		"func Ne(col query.Column, val any) query.Expr { return query.Ne(col, val) }",
+		"func NeCol(col, other query.Column) query.Expr { return query.NeCol(col, other) }",
+		"func Gt(col query.Column, val any) query.Expr { return query.Gt(col, val) }",
+		"func GtCol(col, other query.Column) query.Expr { return query.GtCol(col, other) }",
+		"func Gte(col query.Column, val any) query.Expr { return query.Gte(col, val) }",
+		"func GteCol(col, other query.Column) query.Expr { return query.GteCol(col, other) }",
+		"func Lt(col query.Column, val any) query.Expr { return query.Lt(col, val) }",
+		"func LtCol(col, other query.Column) query.Expr { return query.LtCol(col, other) }",
+		"func Lte(col query.Column, val any) query.Expr { return query.Lte(col, val) }",
+		"func LteCol(col, other query.Column) query.Expr { return query.LteCol(col, other) }",
 		"func In(col query.Column, values ...any) query.Expr { return query.In(col, values...) }",
 		"func Like(col query.Column, pattern string) query.Expr { return query.Like(col, pattern) }",
 		"func ILike(col query.Column, pattern string) query.Expr { return query.ILike(col, pattern) }",

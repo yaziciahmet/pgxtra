@@ -96,30 +96,49 @@ type compareExpr struct {
 	isCol    bool
 }
 
-func compare(col Column, op string, rhs any) Expr {
-	if other, ok := rhs.(Column); ok {
-		return compareExpr{left: col, op: op, rightCol: other, isCol: true}
-	}
-	return compareExpr{left: col, op: op, rightVal: rhs}
+func compareVal(col Column, op string, val any) Expr {
+	return compareExpr{left: col, op: op, rightVal: val}
 }
 
-// Eq builds col = rhs. rhs may be a Column or a bound value.
-func Eq(col Column, rhs any) Expr { return compare(col, "=", rhs) }
+func compareCol(col Column, op string, other Column) Expr {
+	return compareExpr{left: col, op: op, rightCol: other, isCol: true}
+}
 
-// Ne builds col != rhs. rhs may be a Column or a bound value.
-func Ne(col Column, rhs any) Expr { return compare(col, "!=", rhs) }
+// Eq builds col = val.
+func Eq(col Column, val any) Expr { return compareVal(col, "=", val) }
 
-// Gt builds col > rhs. rhs may be a Column or a bound value.
-func Gt(col Column, rhs any) Expr { return compare(col, ">", rhs) }
+// EqCol builds col = other.
+func EqCol(col, other Column) Expr { return compareCol(col, "=", other) }
 
-// Gte builds col >= rhs. rhs may be a Column or a bound value.
-func Gte(col Column, rhs any) Expr { return compare(col, ">=", rhs) }
+// Ne builds col != val.
+func Ne(col Column, val any) Expr { return compareVal(col, "!=", val) }
 
-// Lt builds col < rhs. rhs may be a Column or a bound value.
-func Lt(col Column, rhs any) Expr { return compare(col, "<", rhs) }
+// NeCol builds col != other.
+func NeCol(col, other Column) Expr { return compareCol(col, "!=", other) }
 
-// Lte builds col <= rhs. rhs may be a Column or a bound value.
-func Lte(col Column, rhs any) Expr { return compare(col, "<=", rhs) }
+// Gt builds col > val.
+func Gt(col Column, val any) Expr { return compareVal(col, ">", val) }
+
+// GtCol builds col > other.
+func GtCol(col, other Column) Expr { return compareCol(col, ">", other) }
+
+// Gte builds col >= val.
+func Gte(col Column, val any) Expr { return compareVal(col, ">=", val) }
+
+// GteCol builds col >= other.
+func GteCol(col, other Column) Expr { return compareCol(col, ">=", other) }
+
+// Lt builds col < val.
+func Lt(col Column, val any) Expr { return compareVal(col, "<", val) }
+
+// LtCol builds col < other.
+func LtCol(col, other Column) Expr { return compareCol(col, "<", other) }
+
+// Lte builds col <= val.
+func Lte(col Column, val any) Expr { return compareVal(col, "<=", val) }
+
+// LteCol builds col <= other.
+func LteCol(col, other Column) Expr { return compareCol(col, "<=", other) }
 
 func (e compareExpr) compile(c *Compiler) {
 	c.Write(e.left.Qualifier())

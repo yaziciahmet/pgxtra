@@ -42,7 +42,7 @@ func TestSelectPrefixSuffix(t *testing.T) {
 func TestSelectJoin(t *testing.T) {
 	sql, args := query.Select(querytest.TUsersName, querytest.TPostTitle).
 		From(querytest.TUsers).
-		Join(querytest.TPosts, query.Eq(querytest.TUsersID, querytest.TPostUserID)).
+		Join(querytest.TPosts, query.EqCol(querytest.TUsersID, querytest.TPostUserID)).
 		Where(querytest.TPostPublished.Eq(true)).
 		Build()
 
@@ -92,7 +92,7 @@ func TestSelectClauses(t *testing.T) {
 func TestSelectLeftJoin(t *testing.T) {
 	sql, args := query.Select(querytest.TUsersName, querytest.TPostTitle).
 		From(querytest.TUsers).
-		LeftJoin(querytest.TPosts, query.Eq(querytest.TUsersID, querytest.TPostUserID)).
+		LeftJoin(querytest.TPosts, query.EqCol(querytest.TUsersID, querytest.TPostUserID)).
 		OrderByAsc(querytest.TUsersName).
 		Build()
 
@@ -129,7 +129,7 @@ func TestSelectAndOr(t *testing.T) {
 func TestSelectRightCrossJoin(t *testing.T) {
 	sql, args := query.Select(querytest.TUsersName, querytest.TPostTitle).
 		From(querytest.TUsers).
-		RightJoin(querytest.TPosts, query.Eq(querytest.TUsersID, querytest.TPostUserID)).
+		RightJoin(querytest.TPosts, query.EqCol(querytest.TUsersID, querytest.TPostUserID)).
 		CrossJoin(query.Named("archived")).
 		Build()
 
