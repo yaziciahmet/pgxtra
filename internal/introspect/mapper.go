@@ -33,7 +33,7 @@ func mapScalarType(udtName string) (schema.GoType, error) {
 		return schema.GoType{Name: "bool"}, nil
 	case "text", "varchar", "bpchar", "name":
 		return schema.GoType{Name: "string"}, nil
-	case "timestamptz", "timestamp":
+	case "timestamptz", "timestamp", "date":
 		return schema.GoType{Name: "time.Time"}, nil
 	case "uuid":
 		return schema.GoType{Name: "uuid.UUID", ImportPath: "github.com/google/uuid"}, nil
