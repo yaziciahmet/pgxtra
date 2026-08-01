@@ -7,10 +7,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/yaziciahmet/pgxtra/internal/codegen"
-	"github.com/yaziciahmet/pgxtra/internal/gomod"
-	"github.com/yaziciahmet/pgxtra/internal/introspect"
-	"github.com/yaziciahmet/pgxtra/internal/query"
+	"github.com/yaziciahmet/typg/internal/codegen"
+	"github.com/yaziciahmet/typg/internal/gomod"
+	"github.com/yaziciahmet/typg/internal/introspect"
+	"github.com/yaziciahmet/typg/internal/query"
 )
 
 // Options configures schema introspection and code generation.
@@ -38,7 +38,7 @@ type Options struct {
 	// Default: derived from the nearest go.mod relative to OutDir.
 	ImportPath string
 
-	// QuerySource overrides the embedded query builder (for pgxtra development).
+	// QuerySource overrides the embedded query builder (for typg development).
 	QuerySource string
 
 	// Version is stamped into generated file headers. Default: generate.Version.
@@ -113,7 +113,7 @@ func codegenConfig(opts Options) (codegen.Config, error) {
 	cfg := codegen.Config{
 		Package:       pkg,
 		ImportPath:    importPath,
-		PgxtraVersion: version,
+		TypgVersion: version,
 	}
 	if opts.QuerySource != "" {
 		cfg.QuerySource = opts.QuerySource

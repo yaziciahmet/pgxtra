@@ -3,7 +3,7 @@ package codegen
 import (
 	"strings"
 
-	"github.com/yaziciahmet/pgxtra/internal/schema"
+	"github.com/yaziciahmet/typg/internal/schema"
 )
 
 type colCaps struct {

@@ -1,4 +1,4 @@
-# pgxtra basic example
+# typg basic example
 
 Minimal blog schema (`users` + `posts`) showing the `generate` SDK.
 
@@ -6,7 +6,7 @@ Minimal blog schema (`users` + `posts`) showing the `generate` SDK.
 
 ```bash
 # start postgres
-docker run -d --name pgxtra-basic \
+docker run -d --name typg-basic \
   -e POSTGRES_USER=user -e POSTGRES_PASSWORD=pass -e POSTGRES_DB=blog \
   -p 5434:5432 postgres:16-alpine
 
@@ -27,8 +27,8 @@ Output:
 
 ```go
 import (
-    "github.com/yaziciahmet/pgxtra/examples/basic/gen/db"
-    "github.com/yaziciahmet/pgxtra/examples/basic/gen/models"
+    "github.com/yaziciahmet/typg/examples/basic/gen/db"
+    "github.com/yaziciahmet/typg/examples/basic/gen/models"
 )
 
 sql, args := db.Select(db.Users.Name, db.Posts.Title).

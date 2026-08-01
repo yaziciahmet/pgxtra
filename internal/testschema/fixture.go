@@ -1,6 +1,6 @@
 package testschema
 
-import "github.com/yaziciahmet/pgxtra/internal/schema"
+import "github.com/yaziciahmet/typg/internal/schema"
 
 // Database returns a fixture schema for codegen tests.
 func Database() schema.Database {

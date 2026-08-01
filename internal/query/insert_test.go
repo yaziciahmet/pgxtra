@@ -3,8 +3,8 @@ package query_test
 import (
 	"testing"
 
-	"github.com/yaziciahmet/pgxtra/internal/query"
-	"github.com/yaziciahmet/pgxtra/internal/query/querytest"
+	"github.com/yaziciahmet/typg/internal/query"
+	"github.com/yaziciahmet/typg/internal/query/querytest"
 )
 
 func TestInsertSetOverwrite(t *testing.T) {

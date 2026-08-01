@@ -3,8 +3,8 @@ package introspect_test
 import (
 	"testing"
 
-	"github.com/yaziciahmet/pgxtra/internal/introspect"
-	"github.com/yaziciahmet/pgxtra/internal/schema"
+	"github.com/yaziciahmet/typg/internal/introspect"
+	"github.com/yaziciahmet/typg/internal/schema"
 )
 
 func TestResolveType(t *testing.T) {

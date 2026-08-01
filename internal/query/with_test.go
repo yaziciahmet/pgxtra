@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/yaziciahmet/pgxtra/internal/query"
-	"github.com/yaziciahmet/pgxtra/internal/query/querytest"
+	"github.com/yaziciahmet/typg/internal/query"
+	"github.com/yaziciahmet/typg/internal/query/querytest"
 )
 
 func TestCTEUpdateFrom(t *testing.T) {

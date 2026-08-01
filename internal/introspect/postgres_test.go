@@ -13,7 +13,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/yaziciahmet/pgxtra/internal/introspect"
+	"github.com/yaziciahmet/typg/internal/introspect"
 )
 
 func TestPostgresIntrospect(t *testing.T) {

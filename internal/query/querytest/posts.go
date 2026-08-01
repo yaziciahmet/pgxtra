@@ -1,6 +1,6 @@
 package querytest
 
-import "github.com/yaziciahmet/pgxtra/internal/query"
+import "github.com/yaziciahmet/typg/internal/query"
 
 type Posts struct{}
 

@@ -3,7 +3,7 @@ package codegen
 import (
 	"testing"
 
-	"github.com/yaziciahmet/pgxtra/internal/schema"
+	"github.com/yaziciahmet/typg/internal/schema"
 )
 
 func TestColumnCaps(t *testing.T) {

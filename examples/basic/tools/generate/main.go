@@ -2,7 +2,7 @@
 //
 // Usage:
 //
-//	docker run -d --name pgxtra-basic -e POSTGRES_PASSWORD=pass -e POSTGRES_USER=user \
+//	docker run -d --name typg-basic -e POSTGRES_PASSWORD=pass -e POSTGRES_USER=user \
 //	  -e POSTGRES_DB=blog -p 5434:5432 postgres:16-alpine
 //	psql postgres://user:pass@localhost:5434/blog -f schema.sql
 //	DATABASE_URL='postgres://user:pass@localhost:5434/blog?sslmode=disable' go run ./tools/generate
@@ -13,7 +13,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/yaziciahmet/pgxtra/generate"
+	"github.com/yaziciahmet/typg/generate"
 )
 
 func main() {

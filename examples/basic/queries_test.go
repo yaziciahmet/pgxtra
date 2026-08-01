@@ -3,8 +3,8 @@ package basic_test
 import (
 	"testing"
 
-	"github.com/yaziciahmet/pgxtra/examples/basic/gen/db"
-	"github.com/yaziciahmet/pgxtra/examples/basic/gen/models"
+	"github.com/yaziciahmet/typg/examples/basic/gen/db"
+	"github.com/yaziciahmet/typg/examples/basic/gen/models"
 )
 
 func TestSelectJoin(t *testing.T) {

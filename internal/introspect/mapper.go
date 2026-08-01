@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/yaziciahmet/pgxtra/internal/schema"
+	"github.com/yaziciahmet/typg/internal/schema"
 )
 
 // ResolveType maps a postgres udt_name to a Go type.

@@ -3,7 +3,7 @@ package querytest
 import (
 	"time"
 
-	"github.com/yaziciahmet/pgxtra/internal/query"
+	"github.com/yaziciahmet/typg/internal/query"
 )
 
 type Users struct{}

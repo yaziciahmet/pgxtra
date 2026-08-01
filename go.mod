@@ -1,4 +1,4 @@
-module github.com/yaziciahmet/pgxtra
+module github.com/yaziciahmet/typg
 
 go 1.26.5
 

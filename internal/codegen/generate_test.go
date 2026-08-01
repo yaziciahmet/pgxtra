@@ -7,10 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/yaziciahmet/pgxtra/internal/codegen"
-	"github.com/yaziciahmet/pgxtra/internal/schema"
-	"github.com/yaziciahmet/pgxtra/internal/testschema"
-	"github.com/yaziciahmet/pgxtra/internal/query"
+	"github.com/yaziciahmet/typg/internal/codegen"
+	"github.com/yaziciahmet/typg/internal/schema"
+	"github.com/yaziciahmet/typg/internal/testschema"
+	"github.com/yaziciahmet/typg/internal/query"
 )
 
 func TestGenerateCompile(t *testing.T) {
@@ -33,7 +33,7 @@ require (
 	cfg := codegen.Config{
 		Package:       "db",
 		ImportPath:    "example.com/app/gen/db",
-		PgxtraVersion: "test",
+		TypgVersion: "test",
 		QueryFS:       query.EmbeddedFS,
 	}
 
@@ -88,7 +88,7 @@ func TestGenerateUsersFileContents(t *testing.T) {
 	cfg := codegen.Config{
 		Package:       "db",
 		ImportPath:    "example.com/app/gen/db",
-		PgxtraVersion: "test",
+		TypgVersion: "test",
 	}
 	db := testschema.Database()
 	files, err := codegen.Generate(cfg, db)
@@ -169,7 +169,7 @@ func TestGenerateEnumsFile(t *testing.T) {
 	cfg := codegen.Config{
 		Package:       "db",
 		ImportPath:    "example.com/app/gen/db",
-		PgxtraVersion: "test",
+		TypgVersion: "test",
 	}
 	files, err := codegen.Generate(cfg, testschema.Database())
 	if err != nil {
@@ -201,7 +201,7 @@ func TestGenerateNoTimeImport(t *testing.T) {
 	cfg := codegen.Config{
 		Package:       "db",
 		ImportPath:    "example.com/app/gen/db",
-		PgxtraVersion: "test",
+		TypgVersion: "test",
 	}
 	db := schema.Database{
 		Tables: []schema.Table{{
@@ -232,7 +232,7 @@ func TestEmbeddedQueryOmitsEmbedGo(t *testing.T) {
 	cfg := codegen.Config{
 		Package:       "db",
 		ImportPath:    "example.com/app/gen/db",
-		PgxtraVersion: "test",
+		TypgVersion: "test",
 		QueryFS:       query.EmbeddedFS,
 	}
 	files, err := codegen.Generate(cfg, schema.Database{})

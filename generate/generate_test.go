@@ -12,7 +12,7 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/yaziciahmet/pgxtra/generate"
+	"github.com/yaziciahmet/typg/generate"
 )
 
 func TestGenerateFromPostgres(t *testing.T) {

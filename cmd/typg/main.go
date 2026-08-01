@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/yaziciahmet/pgxtra/generate"
+	"github.com/yaziciahmet/typg/generate"
 )
 
 func main() {
@@ -18,7 +18,7 @@ func main() {
 	switch os.Args[1] {
 	case "generate":
 		if err := runGenerate(os.Args[2:]); err != nil {
-			fmt.Fprintf(os.Stderr, "pgxtra: %v\n", err)
+			fmt.Fprintf(os.Stderr, "typg: %v\n", err)
 			os.Exit(1)
 		}
 	case "version":
@@ -30,7 +30,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprintf(os.Stderr, "usage: pgxtra generate --dsn=... --out=...\n")
+	fmt.Fprintf(os.Stderr, "usage: typg generate --dsn=... --out=...\n")
 }
 
 func runGenerate(args []string) error {

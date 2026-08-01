@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/yaziciahmet/pgxtra/internal/schema"
+	"github.com/yaziciahmet/typg/internal/schema"
 )
 
 // Options configures postgres introspection.
