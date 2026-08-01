@@ -31,5 +31,4 @@ go.work.sum
 # .idea/
 # .vscode/
 
-# local KYC playground (use examples/basic for the committed demo)
-/example/
+tmp/
